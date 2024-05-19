@@ -1,0 +1,17 @@
+# Dependencies
+.env*
+
+# Builds/FS
+# --- backends-api
+__pycache__
+build
+dist
+services/backends-api/data
+# --- frontends-ww
+.next
+.vercel
+node_modules
+
+# Misc
+**/*.log*
+.DS_Store
