@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  frontends-www:
+    build:
+      context: ./services/frontends-www
+    volumes:
+      - ./services/frontends-www/components:/usr/src/frontends-www/components
+      - ./services/frontends-www/pages:/usr/src/frontends-www/pages
+      - ./services/frontends-www/next-env.d.ts:/usr/src/frontends-www/next-env.d.ts
+      - ./services/frontends-www/next.config.js:/usr/src/frontends-www/next.config.js
+      - ./services/frontends-www/package-lock.json:/usr/src/frontends-www/package-lock.json
+      - ./services/frontends-www/package.json:/usr/src/frontends-www/package.json
+      - ./services/frontends-www/tsconfig.json:/usr/src/frontends-www/tsconfig.json
+      - /usr/src/frontends-www/node_modules
+    ports:
+      - 8000:8000
+    command: npm run start:local
+    depends_on:
+      - backends-api
+    restart: on-failure # Vite exits often on import errors as I work, so constantly finding myself restarting manually
+    env_file:
+      - ./.env
+
+  backends-api:
+    build:
+      context: ./services/backends-api
+    volumes:
+      - ./services/backends-api/src:/usr/src/backends-api/src
+      - ./services/backends-api/requirements.txt:/usr/src/backends-api/requirements.txt
+      - ./data:/usr/src/backends-api/data # volume in data from local for rapid updates
+    ports:
+      - 3000:3000
+    command: sh -c "watchmedo auto-restart --pattern="*.py" --directory="." --recursive -- python -u ./src/start.py"
+    env_file:
+      - ./.env
