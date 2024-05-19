@@ -1,0 +1,85 @@
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed,
+figure, figcaption, footer, header, hgroup,
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+margin: 0;
+padding: 0;
+border: 0;
+font-size: 100%;
+font: inherit;
+vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure,
+footer, header, hgroup, menu, nav, section {
+display: block;
+}
+body {
+line-height: 1;
+}
+ol, ul {
+list-style: none;
+}
+blockquote, q {
+quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+content: '';
+content: none;
+}
+table {
+border-collapse: collapse;
+border-spacing: 0;
+}
+
+@font-face {
+  font-family: 'Flora Roman';
+  src: url('/fonts/FloraDisplay-Roman.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Flora Italic';
+  src: url('/fonts/FloraDisplay-Italic.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Stonewall 50';
+  src: url('/fonts/Stonewall_50-Medium-web.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'CommonSans';
+  src: url('/fonts/CommonSans-Regular.otf') format('otf');
+}
+@font-face {
+  font-family: 'Nonplus Black';
+  src: url('/fonts/Nonplus_Black.otf') format('otf');
+}
+@font-face {
+  font-family: 'Nostrav';
+  src: url('/fonts/Nostrav.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Falling Script';
+  src: url('/fonts/FallingScript-V1.003-BackSlantedContinuousType-C.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'CoFo Rax';
+  src: url('/fonts/CoFo_Rax_V0.1.woff') format('woff');
+}
+* {
+  box-sizing: border-box;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  transition: background-color 1s;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
