@@ -35,16 +35,27 @@ else:
 
 # %%
 # Quick Observations
-for i in range(2):
-  # ... emission ranges/frequency across all proteins
-  if i == 0: plt.hist(fps_df['states.0.em_max'], bins=32, color='blue', label='All Proteins')
-  # ... emission ranges/frequency across all proteins we have protein structures for
-  plt.hist(fps_df[fps_df['pdb.0'].notnull()]['states.0.em_max'], bins=32, color='orange', label='Proteins with PDB')
-  plt.xlabel('em_max')
-  plt.ylabel('Frequency')
-  plt.title('Histogram of em_max values')
-  plt.legend()
-  plt.show()
+# ... emission ranges/frequency across all proteins
+plt.hist(fps_df['states.0.em_max'], bins=32, color='blue', label='All Fluorescent Proteins')
+# ... emission ranges/frequency across all proteins we have protein structures for
+plt.hist(fps_df[fps_df['pdb.0'].notnull()]['states.0.em_max'], bins=32, color='orange', label='Fluorescent Proteins with PDB')
+plt.xlabel('em_max')
+plt.ylabel('Frequency')
+plt.title('Histogram of em_max values')
+plt.legend()
+plt.show()
+
+print(f"Total Fluorescent Proteins: {len(fps_df)}")
+print(f"% with Crystal Structures: {round(len(fps_df[fps_df['pdb.0'].notnull()]) / len(fps_df) * 100, 2)}%")
+
+# ... plot distribution of brightness values, and which have crystal structures
+plt.hist(fps_df['states.0.brightness'], bins=32, color='blue', label='All Fluorescent Proteins')
+plt.hist(fps_df[fps_df['pdb.0'].notnull()]['states.0.brightness'], bins=32, color='orange', label='Fluorescent Proteins with PDB')
+plt.xlabel('Brightness')
+plt.ylabel('Frequency')
+plt.title('Histogram of Brightness values')
+plt.legend()
+plt.show()
 
 
 # %%
@@ -74,4 +85,3 @@ for pdb_id in pdb_ids:
 
 # %%
 # Calculate nm wavelength => HEX/RGB (RGB might be easier to score distance from)
-
