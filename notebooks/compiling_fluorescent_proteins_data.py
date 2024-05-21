@@ -1,18 +1,62 @@
+import json
+import math
 import os
 import pandas as pd
 import requests
 import matplotlib.pyplot as plt
 
 
+# Schema for Proteins Dataframe:
+# - name
+# - seq
+# - pdb_id
+# - brightness
+# - em_max
+# - ex_max
+# - states
+# - tags (ex: ['fluorescentprotein', 'chromoprotein'])
+
+
 # %%
 # Fetch Datasets (starting from FPBase collection)
-local_data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
-
 # --- collection csv
+local_data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
 local_data_fps_csv = f"{local_data_dir}/fluorescent_proteins.csv"
 fpbase_fp_collection_csv_url = "https://www.fpbase.org/collection/2811/?format=csv"
+
 if not os.path.exists(local_data_fps_csv):
   fps_df = pd.read_csv(fpbase_fp_collection_csv_url)
+  # transform data to match schema (ex: states are a list of columns as states.0.name, states.0.brightness, etc.)
+  for index, row in fps_df.iterrows():
+    states = []
+    for i in range(8):
+      col_idx = str(i)
+      # if there are no critical values like em_max, skip
+      if isinstance(row.get(f"states.{col_idx}.em_max"), float) and not math.isnan(row.get(f"states.{col_idx}.em_max")):
+        state = {}
+        state['pbd_id'] = row['pdb.' + col_idx]
+        state['name'] = row["states." + col_idx + '.name']
+        state['brightness'] = row["states." + col_idx + '.brightness']
+        state['em_max'] = row["states." + col_idx + '.em_max']
+        state['ex_max'] = row["states." + col_idx + '.ex_max']
+        state['ext_coeff'] = row["states." + col_idx + '.ext_coeff']
+        state['lifetime'] = row["states." + col_idx + '.lifetime']
+        state['maturation'] = row["states." + col_idx + '.maturation']
+        state['pka'] = row["states." + col_idx + '.pka']
+        state['qy'] = row["states." + col_idx + '.qy']
+        states.append(state)
+        if i == 0:
+          fps_df.at[index, 'pdb_id'] = row['pdb.' + col_idx]
+          fps_df.at[index, 'brightness'] = row["states." + col_idx + '.brightness']
+          fps_df.at[index, 'em_max'] = row["states." + col_idx + '.em_max']
+          fps_df.at[index, 'ex_max'] = row["states." + col_idx + '.ex_max']
+    fps_df.at[index, 'states'] = json.dumps(states)
+    fps_df.at[index, 'tags'] = json.dumps(['fluorescentprotein'])
+    fps_df.at[index, 'name'] = row['slug']
+  fps_df.drop(columns=["agg", "doi", "genbank", "ipg_id", "pdb", "slug", "switch_type", "uniprot", "uuid"], inplace=True)
+  fps_df.drop(columns=[col for col in fps_df.columns if col.startswith('pdb.')], inplace=True)
+  fps_df.drop(columns=[col for col in fps_df.columns if col.startswith('states.')], inplace=True)
+  fps_df.drop(columns=[col for col in fps_df.columns if col.startswith('transitions.')], inplace=True)
   fps_df.to_csv(local_data_fps_csv, index=False)
 else:
   fps_df = pd.read_csv(local_data_fps_csv)
@@ -36,9 +80,9 @@ else:
 # %%
 # Quick Observations
 # ... emission ranges/frequency across all proteins
-plt.hist(fps_df['states.0.em_max'], bins=32, color='blue', label='All Fluorescent Proteins')
+plt.hist(fps_df['em_max'], bins=32, color='blue', label='All Fluorescent Proteins')
 # ... emission ranges/frequency across all proteins we have protein structures for
-plt.hist(fps_df[fps_df['pdb.0'].notnull()]['states.0.em_max'], bins=32, color='orange', label='Fluorescent Proteins with PDB')
+plt.hist(fps_df[fps_df['pdb_id'].notnull()]['em_max'], bins=32, color='orange', label='Fluorescent Proteins with PDB')
 plt.xlabel('em_max')
 plt.ylabel('Frequency')
 plt.title('Histogram of em_max values')
@@ -46,11 +90,22 @@ plt.legend()
 plt.show()
 
 print(f"Total Fluorescent Proteins: {len(fps_df)}")
-print(f"% with Crystal Structures: {round(len(fps_df[fps_df['pdb.0'].notnull()]) / len(fps_df) * 100, 2)}%")
+print(f"% with Crystal Structures: {round(len(fps_df[fps_df['pdb_id'].notnull()]) / len(fps_df) * 100, 2)}%")
+
+# ... plot the highest brightness value for each wavelength histogram bucket, to see where highs/lows are in em_max spectrum
+em_max_buckets = [i for i in range(400, 701, 10)]
+max_brightness_values = []
+for em_max_bucket in em_max_buckets:
+  max_brightness_values.append(fps_df[fps_df['em_max'] == em_max_bucket]['brightness'].max())
+plt.bar(em_max_buckets, max_brightness_values, width=10, color='blue')
+plt.xlabel('em_max')
+plt.ylabel('Max Brightness')
+plt.title('Max Brightness for each em_max bucket')
+plt.show()
 
 # ... plot distribution of brightness values, and which have crystal structures
-plt.hist(fps_df['states.0.brightness'], bins=32, color='blue', label='All Fluorescent Proteins')
-plt.hist(fps_df[fps_df['pdb.0'].notnull()]['states.0.brightness'], bins=32, color='orange', label='Fluorescent Proteins with PDB')
+plt.hist(fps_df['brightness'], bins=32, color='blue', label='All Fluorescent Proteins')
+plt.hist(fps_df[fps_df['pdb_id'].notnull()]['brightness'], bins=32, color='orange', label='Fluorescent Proteins with PDB')
 plt.xlabel('Brightness')
 plt.ylabel('Frequency')
 plt.title('Histogram of Brightness values')
@@ -66,10 +121,11 @@ pdb_ids = set()
 
 # --- compile ids
 for index, fp in fps_df.iterrows():
-  for col_name in pdb_col_names:
-    pdb_id = fp[col_name]
-    if pdb_id:
-      pdb_ids.add(pdb_id)
+  pdb_ids.add(fp['pdb_id'])
+  # for col_name in pdb_col_names:
+  #   pdb_id = fp[col_name]
+  #   if pdb_id:
+  #     pdb_ids.add(pdb_id)
 
 # --- download (if doesn't already exist)
 os.makedirs(pdb_dir, exist_ok=True)
@@ -84,4 +140,5 @@ for pdb_id in pdb_ids:
 
 
 # %%
-# Calculate nm wavelength => HEX/RGB (RGB might be easier to score distance from)
+# Calculate extra visiblity data
+# ... nm wavelength => HEX or RGB or LAB (LAB seems its used in physics/optics more? maybe do both LAB/RGB)

@@ -11,10 +11,13 @@ data_dir = os.path.join(os.path.dirname(__file__), "..", "data")
 # ROUTES
 @app.get("/proteins")
 async def get_proteins():
+    # fetch data
+    cps_df = pd.read_csv(f"{data_dir}/chromo_proteins.csv")
     fps_df = pd.read_csv(f"{data_dir}/fluorescent_proteins.csv")
-    fps_df = fps_df[fps_df['pdb.0'].notnull()] # Filter rows with non-null 'pdb.0' values
-    fps_dict = fps_df[['uuid', 'pdb.0', 'seq', 'slug', 'states.0.brightness', 'states.0.em_max', 'states.0.ex_max']].rename(columns={"states.0.brightness": "brightness", "states.0.em_max": "em_max", "states.0.ex_max": "ex_max"}).to_dict(orient="records")
-    return fps_dict
+    cps_dict = cps_df[['name', 'pdb_id', 'seq', 'brightness', 'em_max', 'ex_max', 'states', 'tags']].to_dict(orient="records")
+    fps_dict = fps_df[['name', 'pdb_id', 'seq', 'brightness', 'em_max', 'ex_max', 'states', 'tags']].to_dict(orient="records")
+    # merge, sort by pdb_id, & return
+    return sorted(cps_dict + fps_dict, key=lambda x: str(x['pdb_id']))
 
 @app.get("/proteins/pdb/{pdb_id}")
 async def get_protein_pdb(pdb_id: str):
